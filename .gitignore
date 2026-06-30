@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+*.db
+*.sqlite3
+github-app-private-key.pem
+
+# Node
+node_modules/
+dist/
+.env.local
+
+# Misc
+.DS_Store
+*.log

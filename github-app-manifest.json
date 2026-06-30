@@ -1,0 +1,24 @@
+{
+  "name": "Pipeline Autopilot",
+  "description": "AI-powered CI/CD failure analyzer that automatically detects root causes and opens fix PRs",
+  "url": "https://your-backend.railway.app",
+  "hook_attributes": {
+    "url": "https://your-backend.railway.app/webhook/github",
+    "active": true
+  },
+  "redirect_url": "https://your-backend.railway.app/health",
+  "public": true,
+  "default_permissions": {
+    "actions": "read",
+    "checks": "write",
+    "contents": "write",
+    "metadata": "read",
+    "pull_requests": "write",
+    "workflows": "write"
+  },
+  "default_events": [
+    "workflow_run",
+    "installation",
+    "check_run"
+  ]
+}
