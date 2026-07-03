@@ -5,3 +5,13 @@
 body {
   @apply bg-gray-950 text-gray-100;
 }
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}

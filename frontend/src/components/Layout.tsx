@@ -7,19 +7,28 @@ export default function Layout() {
   const installUrl = `https://github.com/apps/pipeline-autopilot/installations/new`
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col">
+    <div className="min-h-screen bg-gray-950 md:flex">
+      <aside className="bg-gray-900 border-b border-gray-800 md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-b-0 md:border-r">
         {/* Logo */}
-        <div className="p-5 border-b border-gray-800">
+        <div className="flex items-center justify-between gap-4 border-b border-gray-800 p-4 md:block md:p-5">
           <div className="flex items-center gap-2">
-            <GitBranch className="text-sky-400" size={22} />
+            <GitBranch className="shrink-0 text-sky-400" size={22} />
             <span className="font-bold text-white text-lg">Autopilot</span>
           </div>
-          <p className="text-gray-500 text-xs mt-1">AI Pipeline Fixer</p>
+          <p className="hidden text-gray-500 text-xs mt-1 md:block">AI Pipeline Fixer</p>
+          {user && (
+            <button
+              onClick={logout}
+              title="Logout"
+              className="text-gray-500 transition-colors hover:text-red-400 md:hidden"
+            >
+              <LogOut size={17} />
+            </button>
+          )}
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex gap-2 overflow-x-auto p-3 md:flex-1 md:flex-col md:space-y-1 md:overflow-visible md:p-4">
           <NavLink to="/" end className={navClass}>
             <LayoutDashboard size={15} /> Dashboard
           </NavLink>
@@ -30,7 +39,7 @@ export default function Layout() {
 
         {/* App install status */}
         {user && (
-          <div className="px-4 pb-3">
+          <div className="hidden px-4 pb-3 md:block">
             {user.app_installed ? (
               <div className="flex items-center gap-2 bg-green-900/20 border border-green-800/30 rounded-lg px-3 py-2">
                 <CheckCircle size={13} className="text-green-400 shrink-0" />
@@ -52,7 +61,7 @@ export default function Layout() {
 
         {/* User */}
         {user && (
-          <div className="p-4 border-t border-gray-800 flex items-center gap-3">
+          <div className="hidden p-4 border-t border-gray-800 md:flex items-center gap-3">
             {user.avatar_url && (
               <img src={user.avatar_url} alt={user.username} className="w-8 h-8 rounded-full" />
             )}
@@ -67,7 +76,7 @@ export default function Layout() {
         )}
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-6 bg-gray-950">
+      <main className="min-w-0 flex-1 p-4 sm:p-6">
         <Outlet />
       </main>
     </div>
@@ -75,6 +84,6 @@ export default function Layout() {
 }
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+  `flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors md:gap-3 ${
     isActive ? 'bg-sky-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
   }`

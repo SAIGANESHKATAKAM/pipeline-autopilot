@@ -7,8 +7,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-10 w-full max-w-md text-center shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-6 text-center shadow-2xl sm:p-10">
         <div className="flex justify-center mb-4">
           <div className="bg-sky-500/10 p-4 rounded-2xl">
             <GitBranch className="text-sky-400" size={40} />
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
         <button
           onClick={handleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors"
+          className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-100"
         >
           <Github size={20} />
           Sign in with GitHub
