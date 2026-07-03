@@ -123,4 +123,18 @@ async def _get_user_from_token(credentials, db) -> User:
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+
+    if not user.installation_id:
+        inst_result = await db.execute(
+            select(Installation).where(
+                Installation.account_login == user.username,
+                Installation.suspended == False,  # noqa: E712
+            )
+        )
+        installation = inst_result.scalar_one_or_none()
+        if installation:
+            user.installation_id = installation.installation_id
+            await db.commit()
+            await db.refresh(user)
+
     return user

@@ -9,10 +9,14 @@ async def _openrouter_completion(prompt: str, *, expect_json: bool = False) -> s
     if not settings.openrouter_api_key or settings.openrouter_api_key == "CHANGE_ME":
         raise RuntimeError("OPENROUTER_API_KEY is not configured")
 
+    api_key = settings.openrouter_api_key.strip()
+    site_url = settings.openrouter_site_url.strip()
+    site_name = settings.openrouter_site_name.strip()
+
     headers = {
-        "Authorization": f"Bearer {settings.openrouter_api_key}",
-        "HTTP-Referer": settings.openrouter_site_url,
-        "X-Title": settings.openrouter_site_name,
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": site_url,
+        "X-Title": site_name,
         "Content-Type": "application/json",
     }
     payload = {
