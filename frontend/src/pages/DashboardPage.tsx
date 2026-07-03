@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between gap-3 border-b border-gray-800 px-4 py-4 sm:px-5">
           <h2 className="font-semibold text-white">Pipeline Runs</h2>
           <Link to="/repos" className="text-xs text-sky-400 hover:underline">
-            Browse Repos ->
+            Browse Repos {'->'}
           </Link>
         </div>
 

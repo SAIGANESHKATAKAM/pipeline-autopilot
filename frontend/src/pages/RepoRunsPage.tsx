@@ -95,7 +95,7 @@ export default function RepoRunsPage() {
                       to="/"
                       className="inline-flex w-full justify-center rounded-lg border border-green-500/20 bg-green-500/10 px-3 py-1.5 text-xs text-green-400 transition-colors hover:bg-green-500/20 sm:w-auto"
                     >
-                      View in Dashboard ->
+                      View in Dashboard {'->'}
                     </Link>
                   ) : (
                     <button
