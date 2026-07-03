@@ -1,9 +1,48 @@
 import json
-import google.generativeai as genai
+import httpx
 from app.core.config import settings
 
-genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel("gemini-2.0-flash")
+OPENROUTER_API = "https://openrouter.ai/api/v1/chat/completions"
+
+
+async def _openrouter_completion(prompt: str, *, expect_json: bool = False) -> str:
+    if not settings.openrouter_api_key or settings.openrouter_api_key == "CHANGE_ME":
+        raise RuntimeError("OPENROUTER_API_KEY is not configured")
+
+    headers = {
+        "Authorization": f"Bearer {settings.openrouter_api_key}",
+        "HTTP-Referer": settings.openrouter_site_url,
+        "X-Title": settings.openrouter_site_name,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": settings.openrouter_model,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if expect_json:
+        payload["response_format"] = {"type": "json_object"}
+
+    async with httpx.AsyncClient(timeout=90) as client:
+        response = await client.post(OPENROUTER_API, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+    return data["choices"][0]["message"]["content"].strip()
+
+
+def _parse_json_response(text: str, fallback: dict) -> dict:
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        fallback = fallback.copy()
+        fallback["root_cause"] = text[:500]
+        return fallback
 
 
 async def analyze_pipeline_failure(
@@ -14,8 +53,8 @@ async def analyze_pipeline_failure(
     commit_message: str,
 ) -> dict:
     """
-    Send pipeline logs to Gemini and get back a structured analysis.
-    Returns dict with: error_summary, root_cause, affected_files, fix_suggestions, confidence
+    Send pipeline logs to OpenRouter and get back a structured analysis.
+    Returns dict with: error_summary, root_cause, affected_files, fix_suggestions, confidence.
     """
     prompt = f"""You are an expert DevOps engineer analyzing a failed CI/CD pipeline.
 
@@ -47,28 +86,19 @@ Analyze the failure and respond in valid JSON with this exact structure:
 
 Return ONLY the JSON, no markdown, no explanation."""
 
-    response = model.generate_content(prompt)
-    text = response.text.strip()
-
-    # Strip markdown code fences if present
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return {
+    text = await _openrouter_completion(prompt, expect_json=True)
+    return _parse_json_response(
+        text,
+        {
             "error_summary": "AI analysis failed to parse",
-            "root_cause": text[:500],
+            "root_cause": "",
             "error_type": "unknown",
             "affected_files": [],
             "fix_suggestions": [],
             "can_auto_fix": False,
             "overall_confidence": "low",
-        }
+        },
+    )
 
 
 async def generate_fix(
@@ -80,7 +110,7 @@ async def generate_fix(
 ) -> dict:
     """
     Given a file and the error context, generate a fixed version of the file.
-    Returns dict with: fixed_content, explanation, changes_made
+    Returns dict with: fixed_content, explanation, changes_made.
     """
     prompt = f"""You are an expert software engineer fixing a CI/CD pipeline failure.
 
@@ -105,23 +135,15 @@ Rules:
 - Do not add unnecessary comments or formatting changes
 - Return ONLY the JSON, no markdown"""
 
-    response = model.generate_content(prompt)
-    text = response.text.strip()
-
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return {
+    text = await _openrouter_completion(prompt, expect_json=True)
+    return _parse_json_response(
+        text,
+        {
             "fixed_content": None,
             "explanation": "AI fix generation failed",
             "changes_made": [],
-        }
+        },
+    )
 
 
 async def generate_report(
@@ -155,5 +177,4 @@ Write a markdown report with these sections:
 
 Keep it concise and technical. Return ONLY the markdown."""
 
-    response = model.generate_content(prompt)
-    return response.text.strip()
+    return await _openrouter_completion(prompt)

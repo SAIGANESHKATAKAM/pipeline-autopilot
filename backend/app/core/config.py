@@ -13,8 +13,12 @@ class Settings(BaseSettings):
     github_client_id: str = "CHANGE_ME"
     github_client_secret: str = "CHANGE_ME"
 
-    # Gemini AI
+    # AI providers
     gemini_api_key: str = "CHANGE_ME"
+    openrouter_api_key: str = "CHANGE_ME"
+    openrouter_model: str = "openai/gpt-4o"
+    openrouter_site_url: str = "https://pipeline-autopilot-nine.vercel.app"
+    openrouter_site_name: str = "Pipeline Autopilot"
 
     # JWT for website sessions
     jwt_secret: str = "change-this-to-a-random-secret"
