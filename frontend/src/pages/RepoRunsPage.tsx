@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { isAxiosError } from 'axios'
 import { reposApi, pipelineApi } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 import { AlertCircle, Loader2, Play, ExternalLink } from 'lucide-react'
 
 interface WorkflowRun {
@@ -16,6 +18,7 @@ interface WorkflowRun {
 }
 
 export default function RepoRunsPage() {
+  const { user } = useAuth()
   const { owner, repo } = useParams<{ owner: string; repo: string }>()
   const repoFullName = `${owner}/${repo}`
   const [runs, setRuns] = useState<WorkflowRun[]>([])
@@ -31,6 +34,11 @@ export default function RepoRunsPage() {
   }, [owner, repo])
 
   const handleAnalyze = async (run: WorkflowRun) => {
+    if (!user?.app_installed) {
+      alert('Install the GitHub App first, then refresh this page and try again.')
+      return
+    }
+
     setAnalyzing(run.id)
     try {
       await pipelineApi.analyze({
@@ -43,11 +51,16 @@ export default function RepoRunsPage() {
       })
       setAnalyzed((prev) => new Set([...prev, run.id]))
     } catch (e) {
-      alert('Failed to start analysis')
+      const message = isAxiosError(e)
+        ? e.response?.data?.detail || e.response?.data?.message || e.message
+        : 'Failed to start analysis'
+      alert(message)
     } finally {
       setAnalyzing(null)
     }
   }
+
+  const installUrl = `https://github.com/apps/pipeline-autopilot/installations/new`
 
   return (
     <div>
@@ -59,6 +72,23 @@ export default function RepoRunsPage() {
         <span className="truncate font-semibold text-white">{repoFullName}</span>
       </div>
       <h1 className="mb-6 text-2xl font-bold text-white">Failed Pipeline Runs</h1>
+
+      {user && !user.app_installed && (
+        <div className="mb-5 flex flex-col gap-3 rounded-xl border border-sky-700/40 bg-sky-950/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-sky-200">
+            Install the GitHub App before running Analyze & Fix. It needs app access to read logs and open fix PRs.
+          </p>
+          <a
+            href={installUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm text-white transition-colors hover:bg-sky-500"
+          >
+            Install GitHub App
+            <ExternalLink size={13} />
+          </a>
+        </div>
+      )}
 
       {loading ? (
         <div className="py-10 text-center text-gray-500">
@@ -100,7 +130,7 @@ export default function RepoRunsPage() {
                   ) : (
                     <button
                       onClick={() => handleAnalyze(run)}
-                      disabled={analyzing === run.id}
+                      disabled={analyzing === run.id || !user?.app_installed}
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-sky-500 disabled:bg-gray-700 sm:w-auto"
                     >
                       {analyzing === run.id ? (
@@ -108,7 +138,7 @@ export default function RepoRunsPage() {
                       ) : (
                         <Play size={13} />
                       )}
-                      {analyzing === run.id ? 'Starting...' : 'Analyze & Fix'}
+                      {analyzing === run.id ? 'Starting...' : user?.app_installed ? 'Analyze & Fix' : 'Install App First'}
                     </button>
                   )}
                 </div>
