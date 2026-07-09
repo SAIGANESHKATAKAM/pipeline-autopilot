@@ -73,6 +73,8 @@ Go to Railway → your service → **Variables** tab:
 | `AZURE_OPENAI_API_KEY` | Your team key from the onboarding note |
 | `AZURE_OPENAI_DEPLOYMENT` | Azure/APIM deployment name, e.g. `gpt-5-chat` |
 | `AZURE_OPENAI_API_VERSION` | API version from the onboarding note |
+| `AZURE_OPENAI_PATH_PREFIX` | APIM path before `/deployments`, e.g. `openai` or `gpt5-mini` |
+| `AZURE_OPENAI_API_KEY_HEADER` | API key header name, usually `api-key` |
 | `OPENAI_API_KEY` | Optional direct OpenAI Platform fallback |
 | `OPENAI_MODEL` | Optional direct OpenAI model, e.g. `gpt-5` |
 | `OPENROUTER_API_KEY` | Optional fallback if you still use OpenRouter |

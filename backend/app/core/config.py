@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     azure_openai_api_key: str = "CHANGE_ME"
     azure_openai_deployment: str = "gpt-5-chat"
     azure_openai_api_version: str = "CHANGE_ME"
+    azure_openai_path_prefix: str = "openai"
+    azure_openai_api_key_header: str = "api-key"
     openai_api_key: str = "CHANGE_ME"
     openai_model: str = "gpt-5"
     openrouter_api_key: str = "CHANGE_ME"
