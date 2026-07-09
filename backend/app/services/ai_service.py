@@ -315,9 +315,6 @@ Explain the code-level flow using this shape:
 - **Why it broke:** why that code could not compile/run/test correctly
 - **Corrected flow:** how the fix changes the code path so it works
 
-### Root Cause
-Explain the real cause in 2-4 clear sentences.
-
 ### How It Was Fixed
 If a fix PR was opened, include:
 - PR link
@@ -326,17 +323,13 @@ If a fix PR was opened, include:
 - specific changes made
 If no fix was applied, explain why and what the user should inspect manually.
 
-### Verify The Fix
-Give 2-4 concrete validation steps, such as reviewing the PR and rerunning the workflow.
-
-### Recommendations
-Give 2-4 practical prevention tips.
-
 Formatting rules:
 - Use blockquotes, headings, bold labels, and bullet lists to create visual blocks.
+- Wrap file paths, branch names, function names, identifiers, and code snippets in backticks so the UI can highlight them.
 - Keep paragraphs short.
 - Do not invent file names, PR links, branches, or changes that are not provided.
 - Do not use emoji.
+- Do not include sections named "Root Cause", "Verify The Fix", or "Recommendations"; those are shown elsewhere or intentionally hidden.
 - Return ONLY the markdown."""
 
     return await _ai_completion(prompt)

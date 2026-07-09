@@ -74,8 +74,38 @@ const markdownComponents: Components = {
     </a>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-gray-950 px-1.5 py-0.5 font-mono text-xs text-sky-200">{children}</code>
+    <code className="rounded border border-emerald-900/50 bg-emerald-950/30 px-1.5 py-0.5 font-mono text-xs text-emerald-200">
+      {children}
+    </code>
   ),
+}
+
+function withoutRepeatedReportSections(report: string) {
+  const hiddenSections = new Set(['root cause', 'verify the fix', 'recommendations'])
+  const lines = report.split(/\r?\n/)
+  const kept: string[] = []
+  let skippingLevel: number | null = null
+
+  for (const line of lines) {
+    const heading = /^(#{1,6})\s+(.+?)\s*$/.exec(line)
+    if (heading) {
+      const level = heading[1].length
+      const title = heading[2].trim().toLowerCase()
+
+      if (hiddenSections.has(title)) {
+        skippingLevel = level
+        continue
+      }
+
+      if (skippingLevel !== null && level <= skippingLevel) {
+        skippingLevel = null
+      }
+    }
+
+    if (skippingLevel === null) kept.push(line)
+  }
+
+  return kept.join('\n').trim()
 }
 
 export default function RunDetailPage() {
@@ -260,7 +290,10 @@ export default function RunDetailPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Affected Files</p>
           <div className="flex flex-wrap gap-2">
             {run.affected_files.map((f) => (
-              <span key={f} className="max-w-full break-all rounded bg-gray-800 px-2 py-1 font-mono text-xs text-sky-300">
+              <span
+                key={f}
+                className="max-w-full break-all rounded border border-emerald-900/50 bg-emerald-950/30 px-2 py-1 font-mono text-xs text-emerald-200"
+              >
                 {f}
               </span>
             ))}
@@ -277,7 +310,10 @@ export default function RunDetailPage() {
           {run.affected_files.length ? (
             <div className="space-y-2">
               {run.affected_files.map((file) => (
-                <div key={file} className="break-all rounded-lg bg-gray-950 px-3 py-2 font-mono text-xs text-sky-200">
+                <div
+                  key={file}
+                  className="break-all rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2 font-mono text-xs text-emerald-200"
+                >
                   {file}
                 </div>
               ))}
@@ -326,7 +362,9 @@ export default function RunDetailPage() {
             {run.affected_files.length ? (
               <div className="space-y-2">
                 {run.affected_files.map((file) => (
-                  <p key={file} className="break-all font-mono text-xs text-red-100">{file}</p>
+                  <p key={file} className="break-all rounded bg-emerald-950/30 px-2 py-1 font-mono text-xs text-emerald-200">
+                    {file}
+                  </p>
                 ))}
               </div>
             ) : (
@@ -374,7 +412,9 @@ export default function RunDetailPage() {
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Full AI Report</p>
           <div className="max-w-none break-words">
-            <ReactMarkdown components={markdownComponents}>{run.ai_report}</ReactMarkdown>
+            <ReactMarkdown components={markdownComponents}>
+              {withoutRepeatedReportSections(run.ai_report)}
+            </ReactMarkdown>
           </div>
         </div>
       )}
