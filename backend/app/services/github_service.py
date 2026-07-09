@@ -178,6 +178,70 @@ async def create_fix_pr(
         return pr_resp.json()["html_url"]
 
 
+async def create_multi_file_fix_pr(
+    installation_id: int,
+    repo_full_name: str,
+    base_branch: str,
+    fix_branch: str,
+    file_changes: list[dict],
+    commit_message: str,
+    pr_title: str,
+    pr_body: str,
+) -> str:
+    """Create branch, commit multiple file fixes, open PR. Returns PR URL."""
+    token = await get_installation_token(installation_id)
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+
+    async with httpx.AsyncClient() as client:
+        ref_resp = await client.get(
+            f"{GITHUB_API}/repos/{repo_full_name}/git/ref/heads/{base_branch}",
+            headers=headers,
+        )
+        ref_resp.raise_for_status()
+        base_sha = ref_resp.json()["object"]["sha"]
+
+        branch_resp = await client.post(
+            f"{GITHUB_API}/repos/{repo_full_name}/git/refs",
+            json={"ref": f"refs/heads/{fix_branch}", "sha": base_sha},
+            headers=headers,
+        )
+        if branch_resp.status_code not in (201, 422):
+            branch_resp.raise_for_status()
+
+        for change in file_changes:
+            file_path = change["file_path"]
+            new_content = change["new_content"]
+            file_resp = await client.get(
+                f"{GITHUB_API}/repos/{repo_full_name}/contents/{file_path}",
+                params={"ref": fix_branch},
+                headers=headers,
+            )
+            file_sha = file_resp.json().get("sha") if file_resp.status_code == 200 else None
+
+            commit_payload = {
+                "message": commit_message,
+                "content": base64.b64encode(new_content.encode()).decode(),
+                "branch": fix_branch,
+            }
+            if file_sha:
+                commit_payload["sha"] = file_sha
+
+            update_resp = await client.put(
+                f"{GITHUB_API}/repos/{repo_full_name}/contents/{file_path}",
+                json=commit_payload,
+                headers=headers,
+            )
+            update_resp.raise_for_status()
+
+        pr_resp = await client.post(
+            f"{GITHUB_API}/repos/{repo_full_name}/pulls",
+            json={"title": pr_title, "body": pr_body, "head": fix_branch, "base": base_branch},
+            headers=headers,
+        )
+        pr_resp.raise_for_status()
+        return pr_resp.json()["html_url"]
+
+
 # ── Check Runs API ─────────────────────────────────────────────────────────
 
 async def create_check_run(
