@@ -174,10 +174,15 @@ Analyze the failure and respond in valid JSON with this exact structure:
   "error_summary": "One sentence description of what failed",
   "root_cause": "Detailed explanation of why it failed (2-4 sentences)",
   "error_type": "one of: syntax_error | dependency_error | test_failure | build_error | config_error | permission_error | timeout | unknown",
-  "affected_files": ["list", "of", "file", "paths", "likely", "causing", "the", "failure"],
+  "affected_files": ["all", "relevant", "file", "paths", "likely", "causing", "the", "failure"],
   "fix_suggestions": [
     {{
-      "file": "path/to/file.ext",
+      "file": "path/to/file1.ext",
+      "description": "What needs to be changed and why",
+      "confidence": "high|medium|low"
+    }},
+    {{
+      "file": "path/to/file2.ext",
       "description": "What needs to be changed and why",
       "confidence": "high|medium|low"
     }}
@@ -186,7 +191,10 @@ Analyze the failure and respond in valid JSON with this exact structure:
   "overall_confidence": "high|medium|low"
 }}
 
-Return ONLY the JSON, no markdown, no explanation."""
+Important rules:
+- If the build or test failure points to more than one file, include multiple entries in both affected_files and fix_suggestions.
+- Do not collapse the problem to a single file unless the evidence strongly points to just one.
+- Return ONLY the JSON, no markdown, no explanation."""
 
     text = await _ai_completion(prompt, expect_json=True)
     return _parse_json_response(
