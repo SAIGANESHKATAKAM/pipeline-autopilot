@@ -260,31 +260,76 @@ async def generate_report(
     repo_name: str,
     workflow_name: str,
     branch: str,
+    run_id: int,
+    commit_sha: str,
     error_summary: str,
     root_cause: str,
     affected_files: list,
     fix_applied: bool,
     pr_url: str | None,
+    fix_branch: str | None = None,
+    fixed_files: list | None = None,
+    fix_explanation: str = "",
+    changes_made: list | None = None,
 ) -> str:
     """Generate a markdown report for the pipeline failure and fix."""
+    fixed_files = fixed_files or []
+    changes_made = changes_made or []
     prompt = f"""Generate a clear, professional markdown report for a CI/CD pipeline failure.
 
 Repository: {repo_name}
 Workflow: {workflow_name}
 Branch: {branch}
+Run ID: {run_id}
+Commit SHA: {commit_sha}
 Error: {error_summary}
 Root Cause: {root_cause}
 Affected Files: {', '.join(affected_files) if affected_files else 'Unknown'}
+Fixed Files: {', '.join(fixed_files) if fixed_files else 'None'}
 Fix Applied: {'Yes - PR opened at ' + pr_url if fix_applied and pr_url else 'No'}
+Fix Branch: {fix_branch or 'None'}
+Fix Explanation:
+{fix_explanation or 'No automatic fix was generated.'}
+Specific Changes:
+{chr(10).join('- ' + change for change in changes_made) if changes_made else '- None'}
 
-Write a markdown report with these sections:
+Write a markdown report that is easy for a non-expert user to scan.
+
+Use this exact structure:
+
 ## Pipeline Failure Report
-### Summary
-### Root Cause Analysis
-### Affected Files
-### Fix Applied (if applicable)
-### Recommendations
 
-Keep it concise and technical. Return ONLY the markdown."""
+### At a Glance
+Use a compact bullet list with bold labels for: Repository, Workflow, Branch, Run, Commit, Status.
+
+### What Failed
+Use a short blockquote summary, then one short paragraph.
+
+### Where It Failed
+Show each affected file as a bullet with a short "why it matters" explanation.
+
+### Root Cause
+Explain the real cause in 2-4 clear sentences.
+
+### How It Was Fixed
+If a fix PR was opened, include:
+- PR link
+- fix branch
+- fixed files
+- specific changes made
+If no fix was applied, explain why and what the user should inspect manually.
+
+### Verify The Fix
+Give 2-4 concrete validation steps, such as reviewing the PR and rerunning the workflow.
+
+### Recommendations
+Give 2-4 practical prevention tips.
+
+Formatting rules:
+- Use blockquotes, headings, bold labels, and bullet lists to create visual blocks.
+- Keep paragraphs short.
+- Do not invent file names, PR links, branches, or changes that are not provided.
+- Do not use emoji.
+- Return ONLY the markdown."""
 
     return await _ai_completion(prompt)

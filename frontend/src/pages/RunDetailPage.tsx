@@ -2,7 +2,17 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { pipelineApi } from '../services/api'
 import ReactMarkdown from 'react-markdown'
-import { Loader2, GitPullRequest, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react'
+import type { Components } from 'react-markdown'
+import {
+  Loader2,
+  GitPullRequest,
+  AlertCircle,
+  CheckCircle,
+  ExternalLink,
+  FileCode2,
+  GitBranch,
+  Wrench,
+} from 'lucide-react'
 
 interface RunDetail {
   id: number
@@ -18,8 +28,51 @@ interface RunDetail {
   ai_report: string | null
   affected_files: string[]
   fix_pr_url: string | null
+  fix_branch: string | null
   fix_applied: boolean
   created_at: string
+}
+
+const markdownComponents: Components = {
+  h2: ({ children }) => (
+    <h2 className="mt-6 border-b border-gray-800 pb-2 text-lg font-semibold text-white first:mt-0">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mt-5 text-sm font-semibold uppercase tracking-wide text-sky-300">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => <p className="mt-2 leading-6 text-gray-300">{children}</p>,
+  blockquote: ({ children }) => (
+    <blockquote className="mt-3 border-l-4 border-yellow-400 bg-yellow-950/30 px-4 py-3 text-yellow-100">
+      {children}
+    </blockquote>
+  ),
+  ul: ({ children }) => <ul className="mt-3 space-y-2 text-gray-300">{children}</ul>,
+  ol: ({ children }) => <ol className="mt-3 list-decimal space-y-2 pl-5 text-gray-300">{children}</ol>,
+  li: ({ children }) => <li className="ml-4 list-disc pl-1">{children}</li>,
+  table: ({ children }) => (
+    <div className="mt-3 overflow-x-auto rounded-lg border border-gray-800">
+      <table className="min-w-full divide-y divide-gray-800 text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-950/80">{children}</thead>,
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => <td className="border-t border-gray-800 px-3 py-2 align-top text-gray-300">{children}</td>,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
+      {children}
+    </a>
+  ),
+  code: ({ children }) => (
+    <code className="rounded bg-gray-950 px-1.5 py-0.5 font-mono text-xs text-sky-200">{children}</code>
+  ),
 }
 
 export default function RunDetailPage() {
@@ -145,11 +198,57 @@ export default function RunDetailPage() {
         </div>
       )}
 
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+            <FileCode2 size={17} className="text-sky-300" />
+            Failure Location
+          </div>
+          {run.affected_files.length ? (
+            <div className="space-y-2">
+              {run.affected_files.map((file) => (
+                <div key={file} className="break-all rounded-lg bg-gray-950 px-3 py-2 font-mono text-xs text-sky-200">
+                  {file}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No exact file detected yet.</p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+            <Wrench size={17} className="text-green-300" />
+            Fix Status
+          </div>
+          {run.fix_applied ? (
+            <p className="text-sm text-gray-300">
+              A fix was generated and opened as a pull request for review.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500">The run was analyzed, but no automatic fix was opened.</p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+            <GitBranch size={17} className="text-violet-300" />
+            Fix Branch
+          </div>
+          {run.fix_branch ? (
+            <p className="break-all font-mono text-xs text-violet-200">{run.fix_branch}</p>
+          ) : (
+            <p className="text-sm text-gray-500">No fix branch created.</p>
+          )}
+        </div>
+      </div>
+
       {run.ai_report && (
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Full AI Report</p>
-          <div className="prose prose-invert prose-sm max-w-none break-words">
-            <ReactMarkdown>{run.ai_report}</ReactMarkdown>
+          <div className="max-w-none break-words">
+            <ReactMarkdown components={markdownComponents}>{run.ai_report}</ReactMarkdown>
           </div>
         </div>
       )}

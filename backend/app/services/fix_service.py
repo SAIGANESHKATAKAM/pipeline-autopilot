@@ -28,6 +28,9 @@ async def analyze_and_fix(
         "fix_applied": False,
         "error": None,
     }
+    fixed_files = []
+    fix_explanations = []
+    changes_made = []
 
     # Step 1: Fetch logs
     logs = await github_service.get_run_logs(installation_id, repo_full_name, run_id)
@@ -61,8 +64,6 @@ async def analyze_and_fix(
     # Step 3: Auto-fix all suggested files, then open one PR with all changes.
     if analysis.get("can_auto_fix") and analysis.get("fix_suggestions"):
         file_changes = []
-        explanations = []
-        changes_made = []
         seen_paths = set()
 
         for suggestion in analysis["fix_suggestions"]:
@@ -94,7 +95,8 @@ async def analyze_and_fix(
                 "file_path": file_path,
                 "new_content": fixed_content,
             })
-            explanations.append(f"**{file_path}:** {fix_result.get('explanation', 'Updated file')}")
+            fixed_files.append(file_path)
+            fix_explanations.append(f"**{file_path}:** {fix_result.get('explanation', 'Updated file')}")
             for change in fix_result.get("changes_made", []):
                 changes_made.append(f"{file_path}: {change}")
 
@@ -106,7 +108,7 @@ async def analyze_and_fix(
                 repo_full_name=repo_full_name,
                 error_summary=analysis.get("error_summary", ""),
                 root_cause=analysis.get("root_cause", ""),
-                explanation="\n\n".join(explanations),
+                explanation="\n\n".join(fix_explanations),
                 changes=changes_made,
                 commit_sha=commit_sha,
                 fixed_files=[change["file_path"] for change in file_changes],
@@ -133,11 +135,17 @@ async def analyze_and_fix(
         repo_name=repo_full_name,
         workflow_name=workflow_name,
         branch=branch,
+        run_id=run_id,
+        commit_sha=commit_sha,
         error_summary=analysis.get("error_summary", ""),
         root_cause=analysis.get("root_cause", ""),
         affected_files=analysis.get("affected_files", []),
         fix_applied=result["fix_applied"],
         pr_url=result.get("fix_pr_url"),
+        fix_branch=result.get("fix_branch"),
+        fixed_files=fixed_files,
+        fix_explanation="\n\n".join(fix_explanations),
+        changes_made=changes_made,
     )
     result["ai_report"] = report
     result["status"] = "fixed" if result["fix_applied"] else "analyzed"
