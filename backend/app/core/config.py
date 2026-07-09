@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     github_app_id: str = "CHANGE_ME"
     github_app_private_key: str = "CHANGE_ME"
     github_webhook_secret: str = "CHANGE_ME"
+    github_app_slug: str = "pipeline-autopilot"
 
     # GitHub OAuth App (for website login)
     # Same GitHub App can be used — or create a separate OAuth App

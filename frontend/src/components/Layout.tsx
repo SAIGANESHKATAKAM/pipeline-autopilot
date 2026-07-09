@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { GitBranch, LayoutDashboard, BookOpen, LogOut, CheckCircle, PackagePlus } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 export default function Layout() {
   const { user, logout } = useAuth()
@@ -17,13 +18,16 @@ export default function Layout() {
           </div>
           <p className="hidden text-gray-500 text-xs mt-1 md:block">AI Pipeline Fixer</p>
           {user && (
-            <button
-              onClick={logout}
-              title="Logout"
-              className="text-gray-500 transition-colors hover:text-red-400 md:hidden"
-            >
-              <LogOut size={17} />
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              <ThemeToggle />
+              <button
+                onClick={logout}
+                title="Logout"
+                className="text-gray-500 transition-colors hover:text-red-400"
+              >
+                <LogOut size={17} />
+              </button>
+            </div>
           )}
         </div>
 
@@ -61,7 +65,11 @@ export default function Layout() {
 
         {/* User */}
         {user && (
-          <div className="hidden p-4 border-t border-gray-800 md:flex items-center gap-3">
+          <div className="hidden border-t border-gray-800 p-4 md:block">
+            <div className="mb-3">
+              <ThemeToggle />
+            </div>
+            <div className="flex items-center gap-3">
             {user.avatar_url && (
               <img src={user.avatar_url} alt={user.username} className="w-8 h-8 rounded-full" />
             )}
@@ -72,6 +80,7 @@ export default function Layout() {
             <button onClick={logout} title="Logout" className="text-gray-500 hover:text-red-400 transition-colors">
               <LogOut size={15} />
             </button>
+            </div>
           </div>
         )}
       </aside>

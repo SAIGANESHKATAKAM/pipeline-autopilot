@@ -47,10 +47,29 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
         action = payload.get("action")
         run = payload.get("workflow_run", {})
         if action == "completed" and run.get("conclusion") == "failure":
+            if _should_ignore_workflow_run(run):
+                return {"message": "autopilot workflow run ignored"}
             background_tasks.add_task(_handle_workflow_failure, payload)
             return {"message": "analysis queued"}
 
     return {"message": "event ignored"}
+
+
+def _should_ignore_workflow_run(run: dict) -> bool:
+    branch = (run.get("head_branch") or "").lower()
+    commit_message = (
+        run.get("head_commit", {}).get("message")
+        or run.get("display_title")
+        or ""
+    ).lower()
+    actor = (run.get("actor", {}).get("login") or "").lower()
+
+    return (
+        branch.startswith("autopilot/")
+        or "[pipeline autopilot]" in commit_message
+        or "fix: auto-fix pipeline failure" in commit_message
+        or actor.endswith("[bot]") and "pipeline-autopilot" in actor
+    )
 
 
 async def _handle_installation(payload: dict):

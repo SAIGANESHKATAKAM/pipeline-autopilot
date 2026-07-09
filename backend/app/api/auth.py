@@ -74,11 +74,11 @@ async def github_callback(code: str, db: AsyncSession = Depends(get_db)):
 
     await db.flush()
 
-    # Link installation if one exists for this account
-    inst_result = await db.execute(
-        select(Installation).where(Installation.account_login == gh_user["login"])
+    installation = await _find_or_sync_installation(
+        db=db,
+        github_token=github_token,
+        account_login=gh_user["login"],
     )
-    installation = inst_result.scalar_one_or_none()
     if installation:
         user.installation_id = installation.installation_id
 
@@ -125,16 +125,88 @@ async def _get_user_from_token(credentials, db) -> User:
         raise HTTPException(status_code=401, detail="User not found")
 
     if not user.installation_id:
-        inst_result = await db.execute(
-            select(Installation).where(
-                Installation.account_login == user.username,
-                Installation.suspended == False,  # noqa: E712
-            )
+        installation = await _find_or_sync_installation(
+            db=db,
+            github_token=user.github_access_token,
+            account_login=user.username,
         )
-        installation = inst_result.scalar_one_or_none()
         if installation:
             user.installation_id = installation.installation_id
             await db.commit()
             await db.refresh(user)
 
     return user
+
+
+async def _find_or_sync_installation(
+    db: AsyncSession,
+    github_token: str,
+    account_login: str,
+) -> Installation | None:
+    inst_result = await db.execute(
+        select(Installation).where(
+            Installation.account_login == account_login,
+            Installation.suspended == False,  # noqa: E712
+        )
+    )
+    installation = inst_result.scalar_one_or_none()
+    if installation:
+        return installation
+
+    github_installation = await _get_github_installation(github_token, account_login)
+    if not github_installation:
+        return None
+
+    account = github_installation.get("account", {})
+    installation_id = github_installation["id"]
+    result = await db.execute(
+        select(Installation).where(Installation.installation_id == installation_id)
+    )
+    installation = result.scalar_one_or_none()
+
+    if installation:
+        installation.account_login = account.get("login", account_login)
+        installation.account_type = account.get("type", "User")
+        installation.account_avatar_url = account.get("avatar_url")
+        installation.suspended = False
+    else:
+        installation = Installation(
+            installation_id=installation_id,
+            account_login=account.get("login", account_login),
+            account_type=account.get("type", "User"),
+            account_avatar_url=account.get("avatar_url"),
+            suspended=False,
+        )
+        db.add(installation)
+
+    await db.flush()
+    return installation
+
+
+async def _get_github_installation(github_token: str, account_login: str) -> dict | None:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{GITHUB_API}/user/installations",
+            headers={
+                "Authorization": f"Bearer {github_token}",
+                "Accept": "application/vnd.github+json",
+            },
+        )
+        if resp.status_code in (401, 403, 404):
+            return None
+        resp.raise_for_status()
+
+    installations = [
+        installation
+        for installation in resp.json().get("installations", [])
+        if installation.get("app_slug") == settings.github_app_slug
+    ]
+
+    # Prefer a direct user install, but allow org installs too. GitHub returns every
+    # installation this OAuth user can access, and org installs should still unlock the app.
+    for installation in installations:
+        account = installation.get("account", {})
+        if account.get("login", "").lower() == account_login.lower():
+            return installation
+
+    return installations[0] if installations else None

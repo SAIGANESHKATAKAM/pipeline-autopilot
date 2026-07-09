@@ -1,4 +1,5 @@
 import { GitBranch, Github } from 'lucide-react'
+import ThemeToggle from '../components/ThemeToggle'
 
 export default function LoginPage() {
   const handleLogin = () => {
@@ -8,6 +9,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-950 p-4">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-6 text-center shadow-2xl sm:p-10">
         <div className="flex justify-center mb-4">
           <div className="bg-sky-500/10 p-4 rounded-2xl">
