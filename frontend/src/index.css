@@ -63,21 +63,27 @@ body {
 .theme-light .text-gray-100,
 .theme-light .text-gray-200,
 .theme-light .text-gray-300 {
-  color: #263445 !important;
+  color: #1e293b !important;
 }
 
-.theme-light .text-gray-400,
-.theme-light .text-gray-500,
-.theme-light .text-gray-600 {
+.theme-light .text-gray-400 {
   color: #64748b !important;
 }
 
+.theme-light .text-gray-500 {
+  color: #475569 !important;
+}
+
+.theme-light .text-gray-600 {
+  color: #334155 !important;
+}
+
 .theme-light .text-gray-700 {
-  color: #94a3b8 !important;
+  color: #1e293b !important;
 }
 
 .theme-light .placeholder-gray-500::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 
 .theme-light .divide-gray-800 > :not([hidden]) ~ :not([hidden]) {
@@ -89,6 +95,13 @@ body {
 .theme-light .bg-sky-900\/30,
 .theme-light .hover\:bg-sky-900\/50:hover {
   background-color: #e0f2fe !important;
+}
+
+.theme-light .text-sky-100,
+.theme-light .text-sky-200,
+.theme-light .text-sky-300,
+.theme-light .text-sky-400 {
+  color: #0369a1 !important;
 }
 
 .theme-light .border-sky-700\/40,
@@ -124,6 +137,13 @@ body {
 .theme-light .border-green-900\/40,
 .theme-light .border-green-900\/50 {
   border-color: #86efac !important;
+}
+
+.theme-light .text-green-100,
+.theme-light .text-green-200,
+.theme-light .text-green-300,
+.theme-light .text-green-400 {
+  color: #047857 !important;
 }
 
 .theme-light .bg-emerald-950\/30 {
