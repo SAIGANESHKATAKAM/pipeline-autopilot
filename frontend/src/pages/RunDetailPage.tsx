@@ -9,6 +9,9 @@ import {
   AlertCircle,
   CheckCircle,
   ExternalLink,
+  ArrowRight,
+  Bot,
+  Code2,
   FileCode2,
   GitBranch,
   Wrench,
@@ -108,6 +111,35 @@ export default function RunDetailPage() {
     return <div className="py-10 text-center text-gray-500">Run not found.</div>
   }
 
+  const shortSha = run.commit_sha.slice(0, 8)
+  const flowSteps = [
+    {
+      label: 'CI Failed',
+      detail: run.error_summary || 'The workflow finished with a failing result.',
+      icon: AlertCircle,
+      tone: 'border-red-900/50 bg-red-950/30 text-red-200',
+      iconTone: 'text-red-300',
+    },
+    {
+      label: 'AI Analyzed Logs',
+      detail: run.root_cause || 'Pipeline Autopilot is reading the logs and finding the root cause.',
+      icon: Bot,
+      tone: 'border-sky-900/50 bg-sky-950/30 text-sky-100',
+      iconTone: 'text-sky-300',
+    },
+    {
+      label: run.fix_applied ? 'Fix PR Opened' : 'Fix Guidance Ready',
+      detail: run.fix_applied
+        ? 'A branch and pull request were created with the proposed correction.'
+        : 'The failure was explained, but an automatic code fix was not created.',
+      icon: run.fix_applied ? GitPullRequest : Wrench,
+      tone: run.fix_applied
+        ? 'border-green-900/50 bg-green-950/30 text-green-100'
+        : 'border-yellow-900/50 bg-yellow-950/30 text-yellow-100',
+      iconTone: run.fix_applied ? 'text-green-300' : 'text-yellow-300',
+    },
+  ]
+
   return (
     <div className="max-w-4xl">
       <div className="mb-1 flex min-w-0 items-center gap-2 text-sm">
@@ -168,6 +200,41 @@ export default function RunDetailPage() {
           ) : (
             <span className="text-sm text-gray-500">No auto-fix available</span>
           )}
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Code Flow</p>
+            <h2 className="text-base font-semibold text-white">From failed build to fix</h2>
+          </div>
+          <p className="font-mono text-xs text-gray-500">
+            {run.branch} / {shortSha}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
+          {flowSteps.map((step, index) => {
+            const Icon = step.icon
+            return (
+              <div key={step.label} className="contents">
+                <div className={`min-h-36 rounded-lg border p-4 ${step.tone}`}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Icon size={18} className={step.iconTone} />
+                    <p className="font-semibold text-white">{step.label}</p>
+                  </div>
+                  <p className="line-clamp-4 text-sm leading-6">{step.detail}</p>
+                </div>
+                {index < flowSteps.length - 1 && (
+                  <div className="flex items-center justify-center py-1 text-gray-600">
+                    <ArrowRight className="hidden lg:block" size={20} />
+                    <div className="h-5 w-px bg-gray-700 lg:hidden" />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -241,6 +308,62 @@ export default function RunDetailPage() {
           ) : (
             <p className="text-sm text-gray-500">No fix branch created.</p>
           )}
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-xl border border-gray-800 bg-gray-900 p-4">
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+          <Code2 size={17} className="text-emerald-300" />
+          Fix Map
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+          <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-300">Broken Area</p>
+            {run.affected_files.length ? (
+              <div className="space-y-2">
+                {run.affected_files.map((file) => (
+                  <p key={file} className="break-all font-mono text-xs text-red-100">{file}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Unknown file</p>
+            )}
+          </div>
+
+          <div className="flex justify-center text-gray-600">
+            <ArrowRight className="hidden md:block" size={19} />
+            <div className="h-5 w-px bg-gray-700 md:hidden" />
+          </div>
+
+          <div className="rounded-lg border border-violet-900/40 bg-violet-950/20 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-violet-300">Correction Branch</p>
+            <p className="break-all font-mono text-xs text-violet-100">
+              {run.fix_branch || 'No branch created'}
+            </p>
+          </div>
+
+          <div className="flex justify-center text-gray-600">
+            <ArrowRight className="hidden md:block" size={19} />
+            <div className="h-5 w-px bg-gray-700 md:hidden" />
+          </div>
+
+          <div className="rounded-lg border border-green-900/40 bg-green-950/20 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-300">Review Result</p>
+            {run.fix_pr_url ? (
+              <a
+                href={run.fix_pr_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-green-100 hover:text-green-300"
+              >
+                <GitPullRequest size={15} />
+                Open fix PR
+              </a>
+            ) : (
+              <p className="text-sm text-gray-500">No PR opened</p>
+            )}
+          </div>
         </div>
       </div>
 
