@@ -2,12 +2,58 @@ import json
 import httpx
 from app.core.config import settings
 
+OPENAI_RESPONSES_API = "https://api.openai.com/v1/responses"
 OPENROUTER_API = "https://openrouter.ai/api/v1/chat/completions"
+
+
+def _extract_openai_text(data: dict) -> str:
+    if data.get("output_text"):
+        return data["output_text"].strip()
+
+    parts: list[str] = []
+    for item in data.get("output", []):
+        for content in item.get("content", []):
+            if content.get("type") == "output_text" and content.get("text"):
+                parts.append(content["text"])
+
+    return "\n".join(parts).strip()
+
+
+async def _openai_completion(prompt: str, *, expect_json: bool = False) -> str:
+    if not settings.openai_api_key or settings.openai_api_key == "CHANGE_ME":
+        raise RuntimeError("OPENAI_API_KEY is not configured")
+
+    headers = {
+        "Authorization": f"Bearer {settings.openai_api_key.strip()}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": settings.openai_model,
+        "input": prompt,
+    }
+    if expect_json:
+        payload["text"] = {"format": {"type": "json_object"}}
+
+    async with httpx.AsyncClient(timeout=90) as client:
+        response = await client.post(OPENAI_RESPONSES_API, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+
+    text = _extract_openai_text(data)
+    if not text:
+        raise RuntimeError("OpenAI response did not include output text")
+    return text
+
+
+async def _ai_completion(prompt: str, *, expect_json: bool = False) -> str:
+    if settings.openai_api_key and settings.openai_api_key != "CHANGE_ME":
+        return await _openai_completion(prompt, expect_json=expect_json)
+    return await _openrouter_completion(prompt, expect_json=expect_json)
 
 
 async def _openrouter_completion(prompt: str, *, expect_json: bool = False) -> str:
     if not settings.openrouter_api_key or settings.openrouter_api_key == "CHANGE_ME":
-        raise RuntimeError("OPENROUTER_API_KEY is not configured")
+        raise RuntimeError("OPENAI_API_KEY or OPENROUTER_API_KEY is not configured")
 
     api_key = settings.openrouter_api_key.strip()
     site_url = settings.openrouter_site_url.strip()
@@ -90,7 +136,7 @@ Analyze the failure and respond in valid JSON with this exact structure:
 
 Return ONLY the JSON, no markdown, no explanation."""
 
-    text = await _openrouter_completion(prompt, expect_json=True)
+    text = await _ai_completion(prompt, expect_json=True)
     return _parse_json_response(
         text,
         {
@@ -139,7 +185,7 @@ Rules:
 - Do not add unnecessary comments or formatting changes
 - Return ONLY the JSON, no markdown"""
 
-    text = await _openrouter_completion(prompt, expect_json=True)
+    text = await _ai_completion(prompt, expect_json=True)
     return _parse_json_response(
         text,
         {
@@ -181,4 +227,4 @@ Write a markdown report with these sections:
 
 Keep it concise and technical. Return ONLY the markdown."""
 
-    return await _openrouter_completion(prompt)
+    return await _ai_completion(prompt)

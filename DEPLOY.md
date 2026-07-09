@@ -69,7 +69,10 @@ Go to Railway → your service → **Variables** tab:
 | `GITHUB_APP_ID` | App ID from Step 2 |
 | `GITHUB_APP_PRIVATE_KEY` | Full `.pem` contents — replace newlines with `\n` |
 | `GITHUB_WEBHOOK_SECRET` | The random string from Step 2 |
-| `GEMINI_API_KEY` | From https://aistudio.google.com/app/apikey |
+| `OPENAI_API_KEY` | Your OpenAI API key |
+| `OPENAI_MODEL` | `gpt-5` |
+| `OPENROUTER_API_KEY` | Optional fallback if you still use OpenRouter |
+| `OPENROUTER_MODEL` | Optional OpenRouter model, e.g. `openai/gpt-4o` |
 | `DATABASE_URL` | Auto-filled by Railway PostgreSQL plugin |
 
 ### How to format the private key as one line:

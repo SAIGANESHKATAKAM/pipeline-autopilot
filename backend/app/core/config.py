@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     # AI providers
     gemini_api_key: str = "CHANGE_ME"
+    openai_api_key: str = "CHANGE_ME"
+    openai_model: str = "gpt-5"
     openrouter_api_key: str = "CHANGE_ME"
     openrouter_model: str = "openai/gpt-4o"
     openrouter_site_url: str = "https://pipeline-autopilot-nine.vercel.app"

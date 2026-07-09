@@ -27,7 +27,7 @@ if [ ! -f "$ROOT_DIR/backend/.env" ]; then
   echo "  IMPORTANT: Edit backend/.env and fill in your API keys before continuing."
   echo "  Keys needed:"
   echo "    GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET  → github.com/settings/developers"
-  echo "    GEMINI_API_KEY                            → aistudio.google.com/app/apikey"
+  echo "    OPENAI_API_KEY / OPENAI_MODEL             → platform.openai.com/api-keys"
   echo "    JWT_SECRET                               → any random string"
   echo ""
   read -p "Press Enter once you've filled in backend/.env to continue, or Ctrl+C to exit..."
