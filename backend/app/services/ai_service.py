@@ -28,8 +28,11 @@ async def _azure_openai_completion(prompt: str, *, expect_json: bool = False) ->
     path_prefix = settings.azure_openai_path_prefix.strip().strip("/")
     deployments_path = f"{path_prefix}/deployments" if path_prefix else "deployments"
     url = f"{endpoint}/{deployments_path}/{deployment}/chat/completions"
+    api_key = settings.azure_openai_api_key.strip()
     headers = {
-        settings.azure_openai_api_key_header.strip(): settings.azure_openai_api_key.strip(),
+        settings.azure_openai_api_key_header.strip(): api_key,
+        "api-key": api_key,
+        "Ocp-Apim-Subscription-Key": api_key,
         "Content-Type": "application/json",
     }
     payload = {
