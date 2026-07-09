@@ -178,7 +178,7 @@ Analyze the failure and respond in valid JSON with this exact structure:
   "fix_suggestions": [
     {{
       "file": "path/to/file1.ext",
-      "description": "What needs to be changed and why",
+      "description": "What exact code-level change is needed and why",
       "confidence": "high|medium|low"
     }},
     {{
@@ -235,8 +235,8 @@ What to fix: {fix_description}
 Generate the complete fixed version of this file. Respond in valid JSON:
 {{
   "fixed_content": "complete corrected file content here",
-  "explanation": "What you changed and why",
-  "changes_made": ["list", "of", "specific", "changes"]
+  "explanation": "Explain the code flow: what the code was trying to do, where it broke, and how this fix restores that flow",
+  "changes_made": ["specific before-to-after style change, for example: renamed result1 to result in return statement"]
 }}
 
 Rules:
@@ -307,6 +307,13 @@ Use a short blockquote summary, then one short paragraph.
 
 ### Where It Failed
 Show each affected file as a bullet with a short "why it matters" explanation.
+
+### Code Flow
+Explain the code-level flow using this shape:
+- **Expected flow:** what the code/build was trying to execute or compile
+- **Failure point:** the exact symbol, function, file, line clue, or statement pattern that caused the failure
+- **Why it broke:** why that code could not compile/run/test correctly
+- **Corrected flow:** how the fix changes the code path so it works
 
 ### Root Cause
 Explain the real cause in 2-4 clear sentences.

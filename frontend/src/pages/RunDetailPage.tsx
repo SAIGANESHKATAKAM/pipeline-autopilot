@@ -112,27 +112,30 @@ export default function RunDetailPage() {
   }
 
   const shortSha = run.commit_sha.slice(0, 8)
+  const affectedFileSummary = run.affected_files.length
+    ? run.affected_files.join(', ')
+    : 'The exact source file was not detected.'
   const flowSteps = [
     {
-      label: 'CI Failed',
-      detail: run.error_summary || 'The workflow finished with a failing result.',
+      label: 'Expected Code Path',
+      detail: `The build tried to compile or test the changed code on ${run.branch}. Focus area: ${affectedFileSummary}`,
+      icon: Code2,
+      tone: 'border-sky-900/50 bg-sky-950/30 text-sky-100',
+      iconTone: 'text-sky-300',
+    },
+    {
+      label: 'Failure Point',
+      detail: run.error_summary || 'The compiler, test runner, or build tool stopped at the failing code path.',
       icon: AlertCircle,
       tone: 'border-red-900/50 bg-red-950/30 text-red-200',
       iconTone: 'text-red-300',
     },
     {
-      label: 'AI Analyzed Logs',
-      detail: run.root_cause || 'Pipeline Autopilot is reading the logs and finding the root cause.',
-      icon: Bot,
-      tone: 'border-sky-900/50 bg-sky-950/30 text-sky-100',
-      iconTone: 'text-sky-300',
-    },
-    {
-      label: run.fix_applied ? 'Fix PR Opened' : 'Fix Guidance Ready',
+      label: run.fix_applied ? 'Corrected Code Path' : 'Suggested Correction',
       detail: run.fix_applied
-        ? 'A branch and pull request were created with the proposed correction.'
-        : 'The failure was explained, but an automatic code fix was not created.',
-      icon: run.fix_applied ? GitPullRequest : Wrench,
+        ? 'The fix branch updates the broken code so the build can continue through that path.'
+        : run.root_cause || 'The report explains what code needs to change before the build can pass.',
+      icon: run.fix_applied ? Wrench : Bot,
       tone: run.fix_applied
         ? 'border-green-900/50 bg-green-950/30 text-green-100'
         : 'border-yellow-900/50 bg-yellow-950/30 text-yellow-100',
@@ -207,7 +210,7 @@ export default function RunDetailPage() {
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Code Flow</p>
-            <h2 className="text-base font-semibold text-white">From failed build to fix</h2>
+            <h2 className="text-base font-semibold text-white">What broke in the code and how it was fixed</h2>
           </div>
           <p className="font-mono text-xs text-gray-500">
             {run.branch} / {shortSha}
@@ -319,7 +322,7 @@ export default function RunDetailPage() {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
           <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-300">Broken Area</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-300">Failing Code Area</p>
             {run.affected_files.length ? (
               <div className="space-y-2">
                 {run.affected_files.map((file) => (
@@ -337,7 +340,7 @@ export default function RunDetailPage() {
           </div>
 
           <div className="rounded-lg border border-violet-900/40 bg-violet-950/20 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-violet-300">Correction Branch</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-violet-300">Code Change Branch</p>
             <p className="break-all font-mono text-xs text-violet-100">
               {run.fix_branch || 'No branch created'}
             </p>
@@ -349,7 +352,7 @@ export default function RunDetailPage() {
           </div>
 
           <div className="rounded-lg border border-green-900/40 bg-green-950/20 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-300">Review Result</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-300">Fixed Code Review</p>
             {run.fix_pr_url ? (
               <a
                 href={run.fix_pr_url}
