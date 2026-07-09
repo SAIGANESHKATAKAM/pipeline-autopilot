@@ -69,8 +69,12 @@ Go to Railway → your service → **Variables** tab:
 | `GITHUB_APP_ID` | App ID from Step 2 |
 | `GITHUB_APP_PRIVATE_KEY` | Full `.pem` contents — replace newlines with `\n` |
 | `GITHUB_WEBHOOK_SECRET` | The random string from Step 2 |
-| `OPENAI_API_KEY` | Your OpenAI API key |
-| `OPENAI_MODEL` | `gpt-5` |
+| `AZURE_OPENAI_ENDPOINT` | Your hackathon APIM gateway URL, e.g. `https://your-apim.azure-api.net` |
+| `AZURE_OPENAI_API_KEY` | Your team key from the onboarding note |
+| `AZURE_OPENAI_DEPLOYMENT` | Azure/APIM deployment name, e.g. `gpt-5-chat` |
+| `AZURE_OPENAI_API_VERSION` | API version from the onboarding note |
+| `OPENAI_API_KEY` | Optional direct OpenAI Platform fallback |
+| `OPENAI_MODEL` | Optional direct OpenAI model, e.g. `gpt-5` |
 | `OPENROUTER_API_KEY` | Optional fallback if you still use OpenRouter |
 | `OPENROUTER_MODEL` | Optional OpenRouter model, e.g. `openai/gpt-4o` |
 | `DATABASE_URL` | Auto-filled by Railway PostgreSQL plugin |

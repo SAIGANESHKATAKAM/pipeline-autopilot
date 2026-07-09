@@ -27,7 +27,7 @@ if [ ! -f "$ROOT_DIR/backend/.env" ]; then
   echo "  IMPORTANT: Edit backend/.env and fill in your API keys before continuing."
   echo "  Keys needed:"
   echo "    GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET  → github.com/settings/developers"
-  echo "    OPENAI_API_KEY / OPENAI_MODEL             → platform.openai.com/api-keys"
+  echo "    AZURE_OPENAI_* or OPENAI_API_KEY          → your AI provider credentials"
   echo "    JWT_SECRET                               → any random string"
   echo ""
   read -p "Press Enter once you've filled in backend/.env to continue, or Ctrl+C to exit..."

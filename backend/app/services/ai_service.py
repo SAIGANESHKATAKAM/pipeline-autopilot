@@ -6,6 +6,49 @@ OPENAI_RESPONSES_API = "https://api.openai.com/v1/responses"
 OPENROUTER_API = "https://openrouter.ai/api/v1/chat/completions"
 
 
+def _is_configured(value: str | None) -> bool:
+    return bool(value and value.strip() and value != "CHANGE_ME")
+
+
+async def _azure_openai_completion(prompt: str, *, expect_json: bool = False) -> str:
+    required_settings = [
+        settings.azure_openai_endpoint,
+        settings.azure_openai_api_key,
+        settings.azure_openai_deployment,
+        settings.azure_openai_api_version,
+    ]
+    if not all(_is_configured(value) for value in required_settings):
+        raise RuntimeError(
+            "AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, "
+            "AZURE_OPENAI_DEPLOYMENT, and AZURE_OPENAI_API_VERSION must be configured"
+        )
+
+    endpoint = settings.azure_openai_endpoint.strip().rstrip("/")
+    deployment = settings.azure_openai_deployment.strip()
+    url = f"{endpoint}/openai/deployments/{deployment}/chat/completions"
+    headers = {
+        "api-key": settings.azure_openai_api_key.strip(),
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if expect_json:
+        payload["response_format"] = {"type": "json_object"}
+
+    async with httpx.AsyncClient(timeout=90) as client:
+        response = await client.post(
+            url,
+            headers=headers,
+            params={"api-version": settings.azure_openai_api_version.strip()},
+            json=payload,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+    return data["choices"][0]["message"]["content"].strip()
+
+
 def _extract_openai_text(data: dict) -> str:
     if data.get("output_text"):
         return data["output_text"].strip()
@@ -20,7 +63,7 @@ def _extract_openai_text(data: dict) -> str:
 
 
 async def _openai_completion(prompt: str, *, expect_json: bool = False) -> str:
-    if not settings.openai_api_key or settings.openai_api_key == "CHANGE_ME":
+    if not _is_configured(settings.openai_api_key):
         raise RuntimeError("OPENAI_API_KEY is not configured")
 
     headers = {
@@ -46,14 +89,18 @@ async def _openai_completion(prompt: str, *, expect_json: bool = False) -> str:
 
 
 async def _ai_completion(prompt: str, *, expect_json: bool = False) -> str:
-    if settings.openai_api_key and settings.openai_api_key != "CHANGE_ME":
+    if _is_configured(settings.azure_openai_endpoint) or _is_configured(settings.azure_openai_api_key):
+        return await _azure_openai_completion(prompt, expect_json=expect_json)
+    if _is_configured(settings.openai_api_key):
         return await _openai_completion(prompt, expect_json=expect_json)
     return await _openrouter_completion(prompt, expect_json=expect_json)
 
 
 async def _openrouter_completion(prompt: str, *, expect_json: bool = False) -> str:
-    if not settings.openrouter_api_key or settings.openrouter_api_key == "CHANGE_ME":
-        raise RuntimeError("OPENAI_API_KEY or OPENROUTER_API_KEY is not configured")
+    if not _is_configured(settings.openrouter_api_key):
+        raise RuntimeError(
+            "AZURE_OPENAI_API_KEY, OPENAI_API_KEY, or OPENROUTER_API_KEY is not configured"
+        )
 
     api_key = settings.openrouter_api_key.strip()
     site_url = settings.openrouter_site_url.strip()
@@ -103,7 +150,7 @@ async def analyze_pipeline_failure(
     commit_message: str,
 ) -> dict:
     """
-    Send pipeline logs to OpenRouter and get back a structured analysis.
+    Send pipeline logs to the configured AI provider and get back a structured analysis.
     Returns dict with: error_summary, root_cause, affected_files, fix_suggestions, confidence.
     """
     prompt = f"""You are an expert DevOps engineer analyzing a failed CI/CD pipeline.
